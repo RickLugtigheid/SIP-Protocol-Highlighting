@@ -1,0 +1,25 @@
+{
+  "name": "sip-protocol-highlight",
+  "displayName": "SIP hightlight",
+  "description": "",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "sip",
+      "aliases": ["SIP protocol", "sip"],
+      "extensions": [".sip"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "sip",
+      "scopeName": "source.sip",
+      "path": "./syntaxes/sip.tmLanguage.json"
+    }]
+  }
+}
