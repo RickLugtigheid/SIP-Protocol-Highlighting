@@ -2,14 +2,26 @@
   "name": "sip-protocol-highlight",
   "displayName": "SIP hightlight",
   "description": "An extensions for SIP Protocol highlighting",
-  "icon": "assets/images/icon.png",
+  "publisher": "rlugtigheid",
+  "icon": "assets/images/logo.png",
+  "author": {
+    "name": "Rick Lugtigheid",
+    "url": "https://github.com/RickLugtigheid"
+  },
+  "repository": {
+    "url": "https://github.com/RickLugtigheid/SIP-Protocol-Highlighting/",
+    "type": "github"
+  },
   "version": "0.1.0",
   "engines": {
     "vscode": "^1.85.0"
   },
+  "license": "MIT",
   "categories": [
     "Programming Languages"
   ],
+  "readme": "./README.md",
+  "keywords": ["SIP", "syntax"],
   "contributes": {
     "languages": [{
       "id": "sip",
@@ -17,8 +29,8 @@
       "extensions": [".sip"],
       "configuration": "./language-configuration.json",
       "icon": {
-        "dark": "./assets/images/icon.ico",
-        "light": "./assets/images/icon.ico"
+        "dark": "assets/images/logo.ico",
+        "light": "assets/images/logo.ico"
       }
     }],
     "grammars": [{
