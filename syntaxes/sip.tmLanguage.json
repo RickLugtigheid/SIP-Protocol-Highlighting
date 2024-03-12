@@ -142,7 +142,7 @@
 			"patterns": [
 				{
 					"name": "markup.underline.link.sip",
-					"match": "(sips?):([^@\n]+)(?:@([0-9.A-z]+))?",
+					"match": "(sips?):([^@\\n]+)(?:@[^<>\\[\\]\\{\\}\\(\\)\\s]+)?",
 					"captures": {
 						"0": {
 							"name": "constant.character.escape"
