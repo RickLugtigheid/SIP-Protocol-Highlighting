@@ -12,7 +12,7 @@
     "url": "https://github.com/RickLugtigheid/SIP-Protocol-Highlighting/",
     "type": "github"
   },
-  "version": "0.1.0",
+  "version": "0.2.0",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -21,6 +21,7 @@
     "Programming Languages"
   ],
   "readme": "./README.md",
+  "main": "./out/extension.js",
   "keywords": ["SIP", "syntax"],
   "contributes": {
     "languages": [{
@@ -38,5 +39,21 @@
       "scopeName": "source.sip",
       "path": "./syntaxes/sip.tmLanguage.json"
     }]
-  }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+		"@types/node": "^16.18.34",
+		"@types/vscode": "^1.73.0",
+		"@typescript-eslint/eslint-plugin": "^6.7.0",
+		"@typescript-eslint/parser": "^6.7.0",
+		"eslint": "^8.26.0",
+		"typescript": "^5.3.2"
+	}
 }
