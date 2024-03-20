@@ -6,3 +6,5 @@ This extension provides Syntax highlight support for the SIP protocol, usefull f
 ## Features
 - Syntax highlighting
 - Automatic highlighting for files with the `.sip` extension.
+- SIP Diagram viewer
+![Sample](./assets/images/sample-diagram.gif)

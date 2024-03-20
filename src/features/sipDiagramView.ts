@@ -1,13 +1,6 @@
 import * as vscode from 'vscode';
 import SIPParser, { SIPMessage } from '../sipParser';
 
-const cats = {
-	'Coding Cat': 'https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif',
-	'Compiling Cat': 'https://media.giphy.com/media/mlvseq9yvZhba/giphy.gif',
-	'Testing Cat': 'https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif'
-};
-
-
 export function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
 	return {
 		// Enable javascript in the webview
