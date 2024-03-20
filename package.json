@@ -38,7 +38,21 @@
       "language": "sip",
       "scopeName": "source.sip",
       "path": "./syntaxes/sip.tmLanguage.json"
-    }]
+    }],
+    "commands": [
+			{
+				"command": "sipDiagram.start",
+				"title": "Start SIP diagram session",
+				"category": "SIP"
+			}
+		],
+    "keybindings": [
+      {
+        "command": "sipDiagram.start",
+        "key": "ctrl+shift+d",
+        "mac": "cmd+shift+d"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
