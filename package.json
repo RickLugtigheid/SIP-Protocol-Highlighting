@@ -12,17 +12,18 @@
     "url": "https://github.com/RickLugtigheid/SIP-Protocol-Highlighting/",
     "type": "github"
   },
-  "version": "0.2.0",
+  "version": "0.3.0",
   "engines": {
     "vscode": "^1.85.0"
   },
   "license": "MIT",
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Visualization"
   ],
   "readme": "./README.md",
   "main": "./out/extension.js",
-  "keywords": ["SIP", "syntax"],
+  "keywords": ["SIP", "syntax", "diagram", "VoIP"],
   "contributes": {
     "languages": [{
       "id": "sip",
