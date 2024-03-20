@@ -197,7 +197,6 @@ export default class SIPDiagramViewPanel {
 		//
 		let parser = new SIPParser();
 		parser.parse(this._document);
-		console.log('parser.messages: ', parser.messages);
 
 		// Then link the requests to the appropriate responses
 		//
@@ -217,7 +216,6 @@ export default class SIPDiagramViewPanel {
 				}
 			}
 		});
-		console.log('messageGroups: ', messageGroups);
 
 		// And at last generate the mermaid code for the diagram
 		//
@@ -403,7 +401,6 @@ class SIPMessageGroup
 		//
 		if (this._justAskedForAuth && invoker !== this._whoWasAskedForAuth && !message.isResponse)
 		{
-			console.warn(invoker, 'just confirmed (message: ', message, ')');
 			this._justAskedForAuth = false;
 			return true;
 		}
@@ -415,7 +412,6 @@ class SIPMessageGroup
 			{
 				case '401': // Unauthorized
 				case '407': // Requires Auth
-					console.warn(invoker, 'was just asked for authentication (message: ', message, ')');
 					this._justAskedForAuth = true;
 					this._whoWasAskedForAuth = invoker;
 				return false;
