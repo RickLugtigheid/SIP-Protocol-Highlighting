@@ -27,8 +27,13 @@
   "contributes": {
     "languages": [{
       "id": "sip",
-      "aliases": ["SIP protocol", "sip"],
+      "aliases": [
+        "SIP protocol", 
+        "SIP",
+        "sip"
+      ],
       "extensions": [".sip"],
+      "firstLine": "^[A-z]+\\ssip[s]?.*\\sSIP\/[0-9.]+\\w+\\s*",
       "configuration": "./language-configuration.json",
       "icon": {
         "dark": "assets/images/logo.ico",
