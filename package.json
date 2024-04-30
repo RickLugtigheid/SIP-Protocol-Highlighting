@@ -40,11 +40,23 @@
       },
       "firstLine": "[A-Z]+\\s((sips?):([^@\\n]+)(?:@(.+))?)\\sSIP\\/[0-9\\.]+"
     }],
-    "grammars": [{
-      "language": "sip",
-      "scopeName": "source.sip",
-      "path": "./syntaxes/sip.tmLanguage.json"
-    }],
+    "grammars": [
+      {
+        "language": "sip",
+        "scopeName": "source.sip",
+        "path": "./syntaxes/sip.tmLanguage.json"
+      },
+      {
+        "scopeName": "markdown.sip.codeblock",
+        "path": "./syntaxes/sip.markdown.json",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.sip": "sip"
+        }
+      }
+    ],
     "commands": [
 			{
 				"command": "sipDiagram.start",
