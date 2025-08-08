@@ -278,184 +278,177 @@ function extractTopViaBranch(viaHeader: string): string {
 }
 
 
-class MermaidSequenceDiagram
-{
-	public participants:string[];
-	public messages:string[];
-
-	public constructor() {
-		this.participants = [];
-		this.messages = []
-	}
-
-	public addParticipant(participant:string)
-	{
-		this.participants.push(participant);
-	}
-	public addMessage(from: string, to: string, message: string, isResponse: boolean)
-	{
-		let arrow = isResponse ? '-->>' : '->>';
-		this.messages.push(`${from}${arrow}${to}: ${message}`);
-	}
-	/**
-	 * Builds the diagram code needed to render this diagram with mermaid.
-	 */
-	public build()
-	{
-		let code = 'sequenceDiagram';
-		this.participants.forEach(participant => {
-			code += '\nparticipant ' + participant;
-		});
-		this.messages.forEach(message => {
-			code += '\n' + message;
-		});
-		return code;
-	}
+enum SIPMessageKind {
+  Default,
+  ServerToClient,
+  ClientToServer,
+  ClientToTrunk
 }
-enum SIPMessageKind
-{
-	Default,
-	ServerToClient,
-	ClientToServer
+
+class MermaidSequenceDiagram {
+  public participants: string[];
+  public messages: string[];
+
+  constructor() {
+	this.participants = [];
+	this.messages = [];
+  }
+
+  public addParticipant(participant: string) {
+	if (!this.participants.includes(participant)) {
+	  this.participants.push(participant);
+	}
+  }
+
+  public addMessage(from: string, to: string, message: string, isResponse: boolean) {
+	const arrow = isResponse ? '-->>' : '->>';
+	this.messages.push(`${from}${arrow}${to}: ${message}`);
+  }
+
+  public build(): string {
+	let code = 'sequenceDiagram';
+	this.participants.forEach(participant => {
+	  code += `\nparticipant ${participant}`;
+	});
+	this.messages.forEach(message => {
+	  code += `\n${message}`;
+	});
+	return code;
+  }
 }
-class SIPMessageGroup
-{
-	public callID:string;
-	public messages:SIPMessage[];
+
+class SIPMessageGroup {
+	public callID: string;
+	public messages: SIPMessage[];
 	public diagram: MermaidSequenceDiagram;
 	public type: SIPMessageKind;
 
 	private _from: string = 'Unknown';
-	private _via: string = 'PBX';
+	private _via: string = 'Unknown'; // Allow configurable server name
 	private _to: string = 'Unknown';
-
 	private _justAskedForAuth: boolean = false;
 	private _whoWasAskedForAuth: string = 'Unknown';
 
-	public constructor(callID:string, firstMessage:SIPMessage)
+	constructor(callID: string, firstMessage: SIPMessage, serverName: string = 'Server')
 	{
 		this.callID = callID;
 		this.messages = [];
 		this.diagram = new MermaidSequenceDiagram();
 		this.type = SIPMessageKind.Default;
+		this._via = serverName; // Use configurable server name
 
-		//
-		if (firstMessage.requestLine.startsWith('OPTIONS')
-			|| firstMessage.requestLine.startsWith('REGISTER')
-		)
-		{
-			this.type = firstMessage.requestLine.startsWith('OPTIONS') ? SIPMessageKind.ServerToClient : SIPMessageKind.ClientToServer;
-			this._to = SIPParser.parseURI(firstMessage.headers['to'])?.endpoint ?? 'unknown';
-			this._from = 'PBX';
-			this.diagram.addParticipant(this._to);
+		// Determine message type and participants
+		this._initializeParticipants(firstMessage);
+		this.addMessage(firstMessage);
+	}
+
+	private _initializeParticipants(message: SIPMessage) {
+		const fromUri = SIPParser.parseURI(message.headers['from']);
+		const toUri = SIPParser.parseURI(message.headers['to']);
+
+		if (message.requestLine.startsWith('OPTIONS')) {
+			this.type = SIPMessageKind.ServerToClient;
+			this._from = this._via;
+			this._to = toUri?.endpoint ?? 'Unknown';
 			this.diagram.addParticipant(this._from);
-		}
-		else
-		{
-			this._from = SIPParser.parseURI(firstMessage.headers['from'])?.endpoint ?? 'unknown';
-			this._via = 'PBX';
-			this._to = SIPParser.parseURI(firstMessage.headers['to'])?.endpoint ?? 'unknown';
+			this.diagram.addParticipant(this._to);
+		} else if (message.requestLine.startsWith('REGISTER')) {
+			this.type = SIPMessageKind.ClientToServer;
+			this._from = fromUri?.endpoint ?? 'Unknown';
+			this._to = this._via;
+			this.diagram.addParticipant(this._from);
+			this.diagram.addParticipant(this._to);
+		} else if (this._isTrunkCall(message)) {
+			this.type = SIPMessageKind.ClientToTrunk;
+			this._from = fromUri?.endpoint ?? 'Unknown';
+			this._to = toUri?.endpoint ?? 'Unknown';
+			this.diagram.addParticipant(this._from);
+			this.diagram.addParticipant(this._via);
+			this.diagram.addParticipant(this._to);
+		} else {
+			this.type = SIPMessageKind.Default;
+			this._from = fromUri?.endpoint ?? 'Unknown';
+			this._to = toUri?.endpoint ?? 'Unknown';
 			this.diagram.addParticipant(this._from);
 			this.diagram.addParticipant(this._via);
 			this.diagram.addParticipant(this._to);
 		}
-
-		//
-		this.addMessage(firstMessage);
 	}
 
-	public addMessage(message: SIPMessage)
-	{
+	private _isTrunkCall(message: SIPMessage): boolean {
+		// Implement logic to detect trunk calls based on message headers or configuration
+		// Example: Check for specific header values or patterns indicating a trunk
+		const toUri = SIPParser.parseURI(message.headers['to']);
+		return toUri?.endpoint?.includes('trunk') || false; // Adjust based on your trunk detection logic
+	}
+
+	public addMessage(message: SIPMessage) {
 		this.messages.push(message);
 
-		//
-		// Add our message to our diagram
-		//
-
-		// Handle options message
-		//
-		if (this.type === SIPMessageKind.ServerToClient)
-		{
-			if (message.isResponse)
-			{
-				this.diagram.addMessage(this._to, this._from, message.humanize(), message.isResponse);
-			}
-			else
-			{
-				this.diagram.addMessage(this._from, this._to, message.humanize(), message.isResponse);
-			}
-			return;
+		switch (this.type) {
+			case SIPMessageKind.ServerToClient:
+				this._addServerToClientMessage(message);
+				break;
+			case SIPMessageKind.ClientToServer:
+				this._addClientToServerMessage(message);
+				break;
+			case SIPMessageKind.ClientToTrunk:
+			case SIPMessageKind.Default:
+				this._addDefaultOrTrunkMessage(message);
+				break;
 		}
+	}
 
-		// Handle register message
-		//
-		if (this.type === SIPMessageKind.ClientToServer)
-		{
-			if (message.isResponse)
-			{
-				this.diagram.addMessage(this._from, this._to, message.humanize(), message.isResponse);
-			}
-			else
-			{
-				this.diagram.addMessage(this._to, this._from, message.humanize(), message.isResponse);
-			}
-			return;
+	private _addServerToClientMessage(message: SIPMessage) {
+		if (message.isResponse) {
+			this.diagram.addMessage(this._to, this._from, message.humanize(), true);
+		} else {
+			this.diagram.addMessage(this._from, this._to, message.humanize(), false);
 		}
+	}
 
-		// Handle default message
-		//
-		if (message.isResponse)
-		{
-			this.diagram.addMessage(this._to, this._via, message.humanize(), message.isResponse);
-
-			// Check if the message will be forwarded by this._via (PBX)
-			//
-			if (this._shouldForwardMessage(message, this._to))
-			{
-				this.diagram.addMessage(this._via, this._from, message.humanize(), message.isResponse);
-			}
+	private _addClientToServerMessage(message: SIPMessage) {
+		if (message.isResponse) {
+			this.diagram.addMessage(this._to, this._from, message.humanize(), true);
+		} else {
+			this.diagram.addMessage(this._from, this._to, message.humanize(), false);
 		}
-		else
-		{
-			if (!this._justAskedForAuth && this._from !== this._whoWasAskedForAuth)
-			{
-				this.diagram.addMessage(this._from, this._via, message.humanize(), message.isResponse);
-			}
+	}
 
-			// Check if the message will be forwarded by this._via (PBX)
-			//
-			if (this._shouldForwardMessage(message, this._from))
-			{
-				this.diagram.addMessage(this._via, this._to, message.humanize(), message.isResponse);	
+	private _addDefaultOrTrunkMessage(message: SIPMessage) {
+	if (message.isResponse) {
+			if (this._shouldForwardMessage(message, this._to)) {
+			this.diagram.addMessage(this._to, this._via, message.humanize(), true);
+			this.diagram.addMessage(this._via, this._from, message.humanize(), true);
+			} else {
+			this.diagram.addMessage(this._to, this._via, message.humanize(), true);
+			}
+		} else {
+			if (!this._justAskedForAuth || this._from === this._whoWasAskedForAuth) {
+			this.diagram.addMessage(this._from, this._via, message.humanize(), false);
+			}
+			if (this._shouldForwardMessage(message, this._from)) {
+			this.diagram.addMessage(this._via, this._to, message.humanize(), false);
 			}
 		}
 	}
 
-	private _shouldForwardMessage(message: SIPMessage, invoker: string)
-	{
-		//
-		// TODO: Find a better solution.
-		//
-
-		// The reponse to a require auth server response
-		// should not be forwarded.
-		//
-		if (this._justAskedForAuth && invoker !== this._whoWasAskedForAuth && !message.isResponse)
-		{
+	private _shouldForwardMessage(message: SIPMessage, invoker: string): boolean {
+		if (this._justAskedForAuth && invoker !== this._whoWasAskedForAuth && !message.isResponse) {
 			this._justAskedForAuth = false;
 			return true;
 		}
 
-		if (message.isResponse)
-		{
-			let statusCode = message.requestLine.split(' ')[1];
-			switch (statusCode)
-			{
-				case '401': // Unauthorized
-				case '407': // Requires Auth
-					this._justAskedForAuth = true;
-					this._whoWasAskedForAuth = invoker;
+		if (message.isResponse) {
+			const statusCode = message.requestLine.split(' ')[1];
+			switch (statusCode) {
+			case '401': // Unauthorized
+			case '407': // Proxy Authentication Required
+				this._justAskedForAuth = true;
+				this._whoWasAskedForAuth = invoker;
 				return false;
+			default:
+				return true;
 			}
 		}
 		return true;
