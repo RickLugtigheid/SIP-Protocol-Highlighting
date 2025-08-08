@@ -182,10 +182,6 @@ export default class SIPDiagramViewPanel {
 
 	private _generateDiagramHtml() {
 
-		var generator = new Promise<void>(resolve => {
-
-		});
-
 		// First read all request and response lines of our document
 		//
 		let parser = new SIPParser();
@@ -196,22 +192,51 @@ export default class SIPDiagramViewPanel {
 		const messageGroups: {[key: string]: SIPMessageGroup} = {};
 		parser.messages.forEach(message => {
 
-			if (message.headers['call-id'])
-			{
-				let callID = message.headers['call-id'];
-				if (messageGroups[callID])
-				{
-					messageGroups[callID].addMessage(message);
-				}
-				else
-				{
-					messageGroups[callID] = new SIPMessageGroup(callID, message);
-				}
+			// Ensure we have a call-id
+			//
+			if (!message.headers['call-id']) {
+				return;
 			}
+
+			// Handle dialogs
+			//
+			const callID = message.headers['call-id'];
+			const fromTag = extractTag(message.headers['from']);
+			const toTag = extractTag(message.headers['to']) || '';
+			const dialogKey = `${callID}_${fromTag}_${toTag}`;
+
+			if (messageGroups[dialogKey])
+			{
+				messageGroups[dialogKey].addMessage(message);
+				return;
+			}
+
+			// Handle transactions
+			//
+			const cseq = message.headers['cseq'];
+			const viaBranch = extractTopViaBranch(message.headers['via']);
+			const transactionKey = `${callID}_${cseq}_${viaBranch}`;
+			if (messageGroups[transactionKey])
+			{
+				messageGroups[transactionKey].addMessage(message);
+				return;
+			}
+
+			// Handle stateless
+			//
+			const statelessKey = `${callID}_${fromTag}_${toTag}`;
+			if (messageGroups[statelessKey])
+			{
+				messageGroups[statelessKey].addMessage(message);
+				return;
+			}
+
+			// Else when not in a group create a new one
+			//
+			messageGroups[transactionKey] = new SIPMessageGroup(transactionKey, message);
 		});
 
-		// And at last generate the mermaid code for the diagram
-		//
+		// Generate the mermaid code for the diagram
 		let html = '';
 		for (let callID in messageGroups)
 		{
@@ -229,6 +254,29 @@ function getNonce() {
 	}
 	return text;
 }
+
+/**
+ * Extracts the tag from the given header.
+ * @param header The header to extract the tag from.
+ * @returns The tag or an empty string if no tag was found.
+ */
+function extractTag(header: string): string {
+	if (!header) return '';
+	const match = header.match(/;tag=([^\s;>]+)/);
+	return match ? match[1] : '';
+}
+
+/**
+ * Extracts the branch from the given via header.
+ * @param viaHeader 
+ * @returns The branch or an empty string if no branch was found.
+ */
+function extractTopViaBranch(viaHeader: string): string {
+	if (!viaHeader) return '';
+	const match = viaHeader.match(/branch=([^;\s]+)/);
+	return match ? match[1] : '';
+}
+
 
 class MermaidSequenceDiagram
 {
